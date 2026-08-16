@@ -19,6 +19,22 @@ def create_app(config_name=None):
     app = Flask(__name__, template_folder=templates_dir, static_folder=static_dir)
     app.config.from_object(config_by_name.get(config_name, config_by_name["default"]))
 
+    # Detect Vercel/Lambda serverless execution runtime
+    is_serverless = bool(
+        os.path.exists("/var/task")
+        or "AWS_LAMBDA_FUNCTION_NAME" in os.environ
+        or "VERCEL" in os.environ
+        or "/var/task" in os.path.abspath(__file__)
+    )
+
+    db_url = os.getenv("DATABASE_URL")
+    if db_url and db_url.strip():
+        if db_url.startswith("postgres://"):
+            db_url = db_url.replace("postgres://", "postgresql://", 1)
+        app.config["SQLALCHEMY_DATABASE_URI"] = db_url
+    elif is_serverless:
+        app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:////tmp/fitness.db"
+
     # Initialize extensions
     db.init_app(app)
     bcrypt.init_app(app)
