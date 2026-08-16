@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Log Activity | Personal Fitness Tracker{% endblock %}
+
+{% block content %}
+<div class="glass-card form-wrapper" style="max-width: 600px;">
+  <h2>➕ Log Fitness Activity</h2>
+  <p class="subtitle">Record biometric readouts and session logs via the REST API</p>
+
+  <div id="form-alert" class="alert-message"></div>
+
+  <form id="generic-log-form">
+    <div class="form-group">
+      <label for="log-type">Activity Metric Type</label>
+      <select id="log-type" class="form-control" onchange="toggleLogFields()">
+        <option value="steps">👟 Daily Steps (POST /api/v1/logs/steps)</option>
+        <option value="workout">🏋️ Workout Session (POST /api/v1/logs/workout)</option>
+        <option value="heart_rate">❤️ Heart Rate Reading (POST /api/v1/logs/heart-rate)</option>
+        <option value="calories">🔥 Calories Burned (POST /api/v1/logs/calories)</option>
+      </select>
+    </div>
+
+    <!-- Step Log Field -->
+    <div id="field-steps" class="form-group">
+      <label for="step-count">Step Count</label>
+      <input type="number" id="step-count" class="form-control" placeholder="e.g. 5200" min="1">
+    </div>
+
+    <!-- Workout Fields -->
+    <div id="field-workout" style="display: none;">
+      <div class="form-group">
+        <label for="workout-type">Workout Sport / Type</label>
+        <input type="text" id="workout-type" class="form-control" placeholder="Running, Cycling, HIIT, Strength, Swimming...">
+      </div>
+      <div class="form-group">
+        <label for="workout-duration">Duration (Minutes)</label>
+        <input type="number" id="workout-duration" class="form-control" placeholder="e.g. 45" min="1" step="0.5">
+      </div>
+      <div class="form-group">
+        <label for="workout-intensity">Intensity Level</label>
+        <select id="workout-intensity" class="form-control">
+          <option value="low">Low Intensity</option>
+          <option value="medium" selected>Medium Intensity</option>
+          <option value="high">High Intensity</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Heart Rate Field -->
+    <div id="field-heart-rate" class="form-group" style="display: none;">
+      <label for="hr-bpm">Heart Rate (BPM)</label>
+      <input type="number" id="hr-bpm" class="form-control" placeholder="e.g. 72" min="30" max="240">
+    </div>
+
+    <!-- Calories Field -->
+    <div id="field-calories" class="form-group" style="display: none;">
+      <label for="cal-burned">Calories Burned (kcal)</label>
+      <input type="number" id="cal-burned" class="form-control" placeholder="e.g. 350" min="1" step="0.1">
+    </div>
+
+    <!-- Optional Custom Timestamp -->
+    <div class="form-group">
+      <label for="log-timestamp">Timestamp (Optional - defaults to now)</label>
+      <input type="datetime-local" id="log-timestamp" class="form-control">
+    </div>
+
+    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Submit Activity Log</button>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleLogFields() {
+  const type = document.getElementById("log-type").value;
+  document.getElementById("field-steps").style.display = type === "steps" ? "block" : "none";
+  document.getElementById("field-workout").style.display = type === "workout" ? "block" : "none";
+  document.getElementById("field-heart-rate").style.display = type === "heart_rate" ? "block" : "none";
+  document.getElementById("field-calories").style.display = type === "calories" ? "block" : "none";
+}
+</script>
+{% endblock %}

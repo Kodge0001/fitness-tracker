@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}PULSE • Personal Fitness & AI Coach{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block head_extra %}{% endblock %}
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="nav-brand">
+      <span class="brand-logo">P</span> PULSE TRACKER
+    </a>
+    <div class="nav-links">
+      {% if user %}
+        <a href="/" class="{% if request.path == '/' %}active{% endif %}">Dashboard</a>
+        <a href="/log" class="{% if request.path == '/log' %}active{% endif %}">Log Activity</a>
+        <a href="/goals" class="{% if request.path == '/goals' %}active{% endif %}">Goals</a>
+        <a href="javascript:void(0)" onclick="logoutUser()" style="color: var(--text-dim);">Logout ({{ user.username }})</a>
+      {% else %}
+        <a href="/login" class="{% if request.path == '/login' %}active{% endif %}">Sign In</a>
+        <a href="/register" class="btn btn-primary" style="padding: 0.4rem 0.9rem; font-size: 0.8rem;">Register</a>
+      {% endif %}
+    </div>
+  </nav>
+
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer>
+    <p>PULSE FITNESS TRACKER & COACH • POWERED BY FLASK, MATPLOTLIB & GOOGLE GEMINI</p>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

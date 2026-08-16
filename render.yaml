@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: fitness-tracker
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn run:app --workers 3 --timeout 120
+    plan: free
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: fitness-postgres-db
+          property: connectionString
+      - key: ANTHROPIC_API_KEY
+        sync: false
+
+databases:
+  - name: fitness-postgres-db
+    plan: free
+    databaseName: fitness_db
+    user: fitness_user

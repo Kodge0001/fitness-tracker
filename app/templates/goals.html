@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Goals | Personal Fitness Tracker{% endblock %}
+
+{% block content %}
+<div class="glass-card form-wrapper" style="max-width: 550px;">
+  <h2>🎯 Daily Fitness Goals</h2>
+  <p class="subtitle">Customize your daily movement targets (CRUD for Daily Goals)</p>
+
+  <div id="form-alert" class="alert-message"></div>
+
+  <form id="goals-form">
+    <div class="form-group">
+      <label for="input-step-goal">Daily Step Goal</label>
+      <input type="number" id="input-step-goal" name="step_goal" class="form-control" value="{{ goals.step_goal if goals else 10000 }}" required min="100">
+    </div>
+
+    <div class="form-group">
+      <label for="input-cal-goal">Daily Active Calories Burned (kcal)</label>
+      <input type="number" id="input-cal-goal" name="calorie_goal" class="form-control" value="{{ goals.calorie_goal if goals else 500 }}" required min="10">
+    </div>
+
+    <div class="form-group">
+      <label for="input-act-goal">Daily Active Minutes</label>
+      <input type="number" id="input-act-goal" name="active_minutes_goal" class="form-control" value="{{ goals.active_minutes_goal if goals else 45 }}" required min="5">
+    </div>
+
+    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Save Goals</button>
+  </form>
+</div>
+{% endblock %}

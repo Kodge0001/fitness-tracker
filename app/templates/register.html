@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Register | Personal Fitness Tracker{% endblock %}
+
+{% block content %}
+<div class="glass-card form-wrapper">
+  <h2>Create Account</h2>
+  <p class="subtitle">Start tracking workouts, steps, heart rate, and receiving AI insights</p>
+
+  <div id="form-alert" class="alert-message"></div>
+
+  <form id="register-form">
+    <div class="form-group">
+      <label for="username">Username</label>
+      <input type="text" id="username" name="username" class="form-control" placeholder="johndoe" required>
+    </div>
+
+    <div class="form-group">
+      <label for="email">Email Address</label>
+      <input type="email" id="email" name="email" class="form-control" placeholder="john@example.com" required>
+    </div>
+
+    <div class="form-group">
+      <label for="password">Password (min. 6 characters)</label>
+      <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" minlength="6" required>
+    </div>
+
+    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">Register</button>
+  </form>
+
+  <div style="margin-top: 1.5rem; text-align: center; font-size: 0.875rem; color: var(--text-muted);">
+    Already have an account? <a href="/login" style="color: var(--accent-cyan); font-weight: 600;">Sign In</a>
+  </div>
+</div>
+{% endblock %}

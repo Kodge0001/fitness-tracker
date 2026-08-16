@@ -1,0 +1,381 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | PULSE Fitness & Gemini AI Coach{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+  <div class="dashboard-title">
+    <h1>{{ user.username.upper() }} // OVERVIEW</h1>
+    <p>30-Day Activity Tracking, Biometrics, and Gemini AI Exercise & Nutrition Blueprint</p>
+  </div>
+  <div class="header-actions">
+    <button type="button" class="btn btn-primary" onclick="openQuickLogModal()">➕ Log Daily Activity</button>
+    <button id="btn-refresh-gemini" class="btn btn-gemini">⚡ Update Gemini AI Plan</button>
+  </div>
+</div>
+
+<!-- Quick Activity Log Modal -->
+<div id="quick-log-modal" class="modal-overlay">
+  <div class="modal-card" style="max-width: 540px;">
+    <div class="modal-header">
+      <div>
+        <h2>➕ Record Daily Fitness Activity</h2>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.2rem;">
+          Log your daily workout, step count, heart rate reading, or calories burned.
+        </p>
+      </div>
+      <button type="button" class="modal-close-btn" onclick="closeQuickLogModal()">&times;</button>
+    </div>
+
+    <div id="quick-log-alert" class="alert-message"></div>
+
+    <form id="quick-log-form">
+      <div class="form-group">
+        <label for="quick-log-type">Activity Type</label>
+        <select id="quick-log-type" class="form-control" onchange="toggleQuickLogFields()">
+          <option value="steps">👟 Daily Steps (e.g. 8,500 steps)</option>
+          <option value="workout" selected>🏋️ Workout Session (Running, HIIT, Strength, Cycling)</option>
+          <option value="heart_rate">❤️ Heart Rate (BPM)</option>
+          <option value="calories">🔥 Calories Burned (kcal)</option>
+        </select>
+      </div>
+
+      <!-- Steps Field -->
+      <div id="q-field-steps" class="form-group" style="display: none;">
+        <label for="q-step-count">Step Count</label>
+        <input type="number" id="q-step-count" class="form-control" placeholder="e.g. 10000" min="1">
+      </div>
+
+      <!-- Workout Fields -->
+      <div id="q-field-workout">
+        <div class="form-group">
+          <label for="q-workout-type">Workout Name / Sport</label>
+          <input type="text" id="q-workout-type" class="form-control" placeholder="e.g. Chest & Triceps, Morning Run, HIIT...">
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label for="q-workout-duration">Duration (Mins)</label>
+            <input type="number" id="q-workout-duration" class="form-control" placeholder="e.g. 45" min="1" step="0.5">
+          </div>
+          <div class="form-group">
+            <label for="q-workout-intensity">Intensity</label>
+            <select id="q-workout-intensity" class="form-control">
+              <option value="low">Low Intensity</option>
+              <option value="medium" selected>Medium Intensity</option>
+              <option value="high">High Intensity</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Heart Rate Field -->
+      <div id="q-field-heart-rate" class="form-group" style="display: none;">
+        <label for="q-hr-bpm">Heart Rate (BPM)</label>
+        <input type="number" id="q-hr-bpm" class="form-control" placeholder="e.g. 74" min="35" max="230">
+      </div>
+
+      <!-- Calories Field -->
+      <div id="q-field-calories" class="form-group" style="display: none;">
+        <label for="q-cal-burned">Calories Burned (kcal)</label>
+        <input type="number" id="q-cal-burned" class="form-control" placeholder="e.g. 450" min="1" step="0.5">
+      </div>
+
+      <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem;">
+        <button type="button" class="btn btn-secondary" onclick="closeQuickLogModal()">Cancel</button>
+        <button type="submit" id="btn-submit-quick-log" class="btn btn-primary">Save Activity</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============================================================== -->
+<!-- 1. GEMINI AI COACH (Diet, Exercise, Timeline & Daily Tasks)     -->
+<!-- ============================================================== -->
+<div id="gemini-coach-section" class="coach-container">
+  <div class="section-headline">
+    <div style="display: flex; align-items: center; gap: 0.6rem;">
+      <span>🧠 GEMINI AI FITNESS & NUTRITION COACH</span>
+      <span class="section-badge">Gemini 2.5 Flash</span>
+    </div>
+    <span id="gemini-plan-goal" style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">
+      Focus: {{ user.goal_focus or 'Overall Health & Recomposition' }}
+    </span>
+  </div>
+
+  <div class="coach-card glass-card">
+    <div class="coach-header">
+      <div class="coach-title">
+        <h2 id="gemini-plan-title">Personalized Gemini Fitness Blueprint</h2>
+        <p>Dynamic exercise programming, metabolic nutrition, 4-week progression timeline & interactive tasks</p>
+      </div>
+      <div style="display: flex; gap: 0.5rem;">
+        <button id="btn-open-assessment" class="btn btn-primary" style="font-size: 0.82rem; padding: 0.45rem 0.9rem;">
+          ⚙️ Personalize Plan Details
+        </button>
+        <button id="btn-refresh-ai" class="btn btn-secondary" style="font-size: 0.82rem; padding: 0.45rem 0.9rem;">
+          ✨ Biometrics Insights
+        </button>
+      </div>
+    </div>
+
+<!-- Assessment Modal Dialog -->
+<div id="assessment-modal" class="modal-overlay">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div>
+        <h2>📋 Personal Fitness & Health Assessment</h2>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.2rem;">
+          Gemini AI uses these exact details to tailor your exercise splits, calorie targets, meal macros, timeline, and daily tasks.
+        </p>
+      </div>
+      <button type="button" class="modal-close-btn" onclick="closeAssessmentModal()">&times;</button>
+    </div>
+
+    <form id="gemini-assessment-form">
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label for="assess-age">Age</label>
+          <input type="number" id="assess-age" name="age" class="form-control" value="{{ user.age or 26 }}" min="14" max="100" required>
+        </div>
+        <div class="form-group">
+          <label for="assess-gender">Gender</label>
+          <select id="assess-gender" name="gender" class="form-control">
+            <option value="Male" {% if user.gender == 'Male' %}selected{% endif %}>Male</option>
+            <option value="Female" {% if user.gender == 'Female' %}selected{% endif %}>Female</option>
+            <option value="Non-binary" {% if user.gender == 'Non-binary' %}selected{% endif %}>Other / Prefer not to say</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label for="assess-weight">Body Weight (kg)</label>
+          <input type="number" id="assess-weight" name="weight_kg" class="form-control" value="{{ user.weight_kg or 72 }}" step="0.5" min="30" max="250" required>
+        </div>
+        <div class="form-group">
+          <label for="assess-height">Height (cm)</label>
+          <input type="number" id="assess-height" name="height_cm" class="form-control" value="{{ user.height_cm or 175 }}" step="0.5" min="100" max="250" required>
+        </div>
+      </div>
+
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label for="assess-level">Fitness Experience Level</label>
+          <select id="assess-level" name="fitness_level" class="form-control">
+            <option value="Beginner" {% if user.fitness_level == 'Beginner' %}selected{% endif %}>Beginner (0-6 months)</option>
+            <option value="Intermediate" {% if user.fitness_level == 'Intermediate' or not user.fitness_level %}selected{% endif %}>Intermediate (6m-2 years)</option>
+            <option value="Advanced" {% if user.fitness_level == 'Advanced' %}selected{% endif %}>Advanced (2+ years)</option>
+            <option value="Competitive Athlete" {% if user.fitness_level == 'Competitive Athlete' %}selected{% endif %}>Competitive Athlete</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="assess-days">Workout Days / Week</label>
+          <select id="assess-days" name="workout_days_per_week" class="form-control">
+            <option value="3" {% if user.workout_days_per_week == 3 %}selected{% endif %}>3 Days / Week (Full Body)</option>
+            <option value="4" {% if user.workout_days_per_week == 4 or not user.workout_days_per_week %}selected{% endif %}>4 Days / Week (Upper/Lower Split)</option>
+            <option value="5" {% if user.workout_days_per_week == 5 %}selected{% endif %}>5 Days / Week (Push/Pull/Legs)</option>
+            <option value="6" {% if user.workout_days_per_week == 6 %}selected{% endif %}>6 Days / Week (High Frequency)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="assess-goal">Primary Fitness & Body Goal</label>
+        <input type="text" id="assess-goal" name="goal_focus" class="form-control" placeholder="e.g., Build lean muscle & abs, Lose 5kg fat, 10k Run prep" value="{{ user.goal_focus or 'Build Lean Muscle & Fat Loss' }}" required>
+      </div>
+
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label for="assess-diet">Dietary Preference & Lifestyle</label>
+          <select id="assess-diet" name="dietary_preference" class="form-control">
+            <option value="High Protein Non-Veg" {% if user.dietary_preference == 'High Protein Non-Veg' or not user.dietary_preference %}selected{% endif %}>High Protein Non-Veg (Eggs/Chicken/Fish)</option>
+            <option value="High Protein Vegetarian" {% if user.dietary_preference == 'High Protein Vegetarian' %}selected{% endif %}>High Protein Vegetarian (Paneer/Tofu/Lentils/Whey)</option>
+            <option value="Vegan" {% if user.dietary_preference == 'Vegan' %}selected{% endif %}>100% Plant-Based / Vegan</option>
+            <option value="Keto / Low-Carb" {% if user.dietary_preference == 'Keto / Low-Carb' %}selected{% endif %}>Keto / Low-Carb</option>
+            <option value="Balanced / Mediterranean" {% if user.dietary_preference == 'Balanced / Mediterranean' %}selected{% endif %}>Balanced Mediterranean</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="assess-timeline">Plan Timeline Duration</label>
+          <select id="assess-timeline" name="target_timeline_weeks" class="form-control">
+            <option value="4" selected>4-Week Transformation Sprint</option>
+            <option value="8">8-Week Progressive Program</option>
+            <option value="12">12-Week Total Body Transformation</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="assess-injuries">Injuries, Pain, or Physical Limitations</label>
+        <input type="text" id="assess-injuries" name="injuries_or_limitations" class="form-control" placeholder="e.g. Lower back stiffness, knee pain, or 'None'" value="{{ user.injuries_or_limitations or 'None' }}">
+      </div>
+
+      <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem;">
+        <button type="button" class="btn btn-secondary" onclick="closeAssessmentModal()">Cancel</button>
+        <button type="submit" id="btn-submit-assessment" class="btn btn-gemini">⚡ Generate Plan with Gemini</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+    <!-- Gemini Dual Columns -->
+    <div class="coach-grid">
+      <!-- Column A: Exercise & Diet Suggestions -->
+      <div>
+        <div style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.75rem;">
+          🏋️ Exercise & Workout Blueprint
+        </div>
+        <div id="gemini-exercise-list">
+          <div class="suggestion-box">
+            <h3>Generating exercise plan...</h3>
+          </div>
+        </div>
+
+        <div style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin: 1.25rem 0 0.75rem;">
+          🥗 Diet, Nutrition & Hydration Strategy
+        </div>
+        <div id="gemini-diet-list">
+          <div class="suggestion-box">
+            <h3>Generating nutrition guidelines...</h3>
+          </div>
+        </div>
+      </div>
+
+      <!-- Column B: 4-Week Timeline & Interactive Daily Tasks -->
+      <div>
+        <div style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.75rem;">
+          📅 4-Week Progression Timeline
+        </div>
+        <div id="gemini-timeline-list" class="timeline-list">
+          <div class="timeline-item">
+            <div class="timeline-indicator">1</div>
+            <div class="timeline-content">
+              <h4>Loading milestone timeline...</h4>
+            </div>
+          </div>
+        </div>
+
+        <div style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin: 1.25rem 0 0.75rem;">
+          ✅ Assigned Actionable Tasks (Check to complete)
+        </div>
+        <div id="gemini-tasks-list" class="tasks-container">
+          <div class="task-item">
+            <div class="task-text">
+              <h5>Loading tasks...</h5>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================== -->
+<!-- 2. DAILY GOAL PROGRESS METRIC CARDS                            -->
+<!-- ============================================================== -->
+<div class="section-headline">
+  <span>🎯 DAILY TARGET PROGRESS</span>
+  <a href="/goals" style="font-size: 0.82rem; color: var(--text-muted); text-decoration: underline;">Configure Targets</a>
+</div>
+
+<div class="goals-grid">
+  <!-- Steps Card -->
+  <div class="glass-card metric-card">
+    <div class="metric-header">
+      <span class="metric-label">Daily Steps</span>
+      <span class="metric-icon">👟</span>
+    </div>
+    <div class="metric-value" id="steps-current">--</div>
+    <div class="progress-bar-bg">
+      <div id="steps-bar" class="progress-bar-fill" style="width: 0%;"></div>
+    </div>
+    <div class="metric-sub">
+      Target: <span id="steps-target">{{ goals.step_goal if goals else 10000 }}</span> steps (<span id="steps-pct">0%</span>)
+    </div>
+  </div>
+
+  <!-- Calories Burned Card -->
+  <div class="glass-card metric-card">
+    <div class="metric-header">
+      <span class="metric-label">Calories Burned</span>
+      <span class="metric-icon">🔥</span>
+    </div>
+    <div class="metric-value" id="calories-current">--</div>
+    <div class="progress-bar-bg">
+      <div id="calories-bar" class="progress-bar-fill" style="width: 0%;"></div>
+    </div>
+    <div class="metric-sub">
+      Target: <span id="calories-target">{{ goals.calorie_goal if goals else 500 }}</span> kcal (<span id="calories-pct">0%</span>)
+    </div>
+  </div>
+
+  <!-- Active Minutes Card -->
+  <div class="glass-card metric-card">
+    <div class="metric-header">
+      <span class="metric-label">Active Minutes</span>
+      <span class="metric-icon">⏱️</span>
+    </div>
+    <div class="metric-value" id="active-current">--</div>
+    <div class="progress-bar-bg">
+      <div id="active-bar" class="progress-bar-fill" style="width: 0%;"></div>
+    </div>
+    <div class="metric-sub">
+      Target: <span id="active-target">{{ goals.active_minutes_goal if goals else 45 }}</span> mins (<span id="active-pct">0%</span>)
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================== -->
+<!-- 3. MONOCHROME MATPLOTLIB 30-DAY CHARTS                          -->
+<!-- ============================================================== -->
+<div class="section-headline">
+  <span>📊 30-DAY BIOMETRICS & LOG ANALYTICS</span>
+  <span class="section-badge">Server Rendered PNG</span>
+</div>
+
+<div class="charts-grid">
+  <!-- Chart 1: Bar Steps vs Goal -->
+  <div class="glass-card chart-card">
+    <div class="chart-card-header">
+      <h3>Step Count vs Target Goal</h3>
+      <span style="font-size: 0.78rem; color: var(--text-dim);">BAR CHART</span>
+    </div>
+    <div class="chart-container">
+      <img src="/api/v1/charts/steps.png" alt="Daily Step Count vs Target" loading="lazy">
+    </div>
+  </div>
+
+  <!-- Chart 2: Heart Rate Trend Line -->
+  <div class="glass-card chart-card">
+    <div class="chart-card-header">
+      <h3>Heart Rate Trajectory (BPM)</h3>
+      <span style="font-size: 0.78rem; color: var(--text-dim);">LINE CHART</span>
+    </div>
+    <div class="chart-container">
+      <img src="/api/v1/charts/heart_rate.png" alt="Heart Rate Over Time" loading="lazy">
+    </div>
+  </div>
+
+  <!-- Chart 3: Duration vs Calories Scatter -->
+  <div class="glass-card chart-card">
+    <div class="chart-card-header">
+      <h3>Workout Duration vs Calories Burned</h3>
+      <span style="font-size: 0.78rem; color: var(--text-dim);">SCATTER PLOT</span>
+    </div>
+    <div class="chart-container">
+      <img src="/api/v1/charts/workout.png" alt="Workout Duration vs Calories Burned" loading="lazy">
+    </div>
+  </div>
+
+  <!-- Chart 4: Activity Intensity Heatmap -->
+  <div class="glass-card chart-card">
+    <div class="chart-card-header">
+      <h3>Hourly Activity Intensity Distribution</h3>
+      <span style="font-size: 0.78rem; color: var(--text-dim);">INTENSITY HEATMAP</span>
+    </div>
+    <div class="chart-container">
+      <img src="/api/v1/charts/heatmap.png" alt="Hourly Activity Heatmap" loading="lazy">
+    </div>
+  </div>
+</div>
+{% endblock %}
