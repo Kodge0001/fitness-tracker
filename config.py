@@ -15,12 +15,6 @@ class Config:
     JWT_COOKIE_CSRF_PROTECT = False  # Keep false for dual API/Web simplicity
 
 def get_database_uri():
-    db_url = os.getenv("DATABASE_URL")
-    if db_url and db_url.strip():
-        if db_url.startswith("postgres://"):
-            return db_url.replace("postgres://", "postgresql://", 1)
-        return db_url
-
     # Check if running in Vercel / AWS Lambda / Serverless
     is_serverless = (
         os.path.exists("/var/task")
@@ -28,6 +22,15 @@ def get_database_uri():
         or "VERCEL" in os.environ
         or "/var/task" in os.path.abspath(__file__)
     )
+
+    db_url = os.getenv("DATABASE_URL")
+    if db_url and db_url.strip():
+        if db_url.startswith("postgres://"):
+            return db_url.replace("postgres://", "postgresql://", 1)
+        if "postgresql" in db_url or "postgres" in db_url or "mysql" in db_url:
+            return db_url
+        if is_serverless and "sqlite" in db_url:
+            return "sqlite:////tmp/fitness.db"
 
     if is_serverless:
         return "sqlite:////tmp/fitness.db"
