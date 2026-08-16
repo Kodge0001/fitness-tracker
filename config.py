@@ -17,16 +17,15 @@ class Config:
     # Base directory
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
-    # Detect Vercel serverless environment (/tmp is the only writable directory on Vercel)
-    is_vercel = os.getenv("VERCEL") == "1" or os.getenv("AWS_LAMBDA_FUNCTION_NAME")
-    if is_vercel:
-        default_sqlite_path = "sqlite:////tmp/fitness.db"
-    else:
-        default_sqlite_path = f"sqlite:///{os.path.join(BASE_DIR, 'fitness.db')}"
+    # Detect Vercel serverless environment (AWS Lambda / Vercel only allows write operations in /tmp)
+    is_vercel = bool(os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME"))
+    default_sqlite_path = "sqlite:////tmp/fitness.db" if is_vercel else f"sqlite:///{os.path.join(BASE_DIR, 'fitness.db')}"
 
-    # Database configuration (PostgreSQL cloud database recommended for persistent Vercel storage)
-    db_url = os.getenv("DATABASE_URL", default_sqlite_path)
-    if db_url.startswith("postgres://"):
+    # Database configuration
+    db_url = os.getenv("DATABASE_URL")
+    if not db_url or not db_url.strip():
+        db_url = default_sqlite_path
+    elif db_url.startswith("postgres://"):
         db_url = db_url.replace("postgres://", "postgresql://", 1)
 
     SQLALCHEMY_DATABASE_URI = db_url
