@@ -17,18 +17,24 @@ class Config:
     # Base directory
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
-    # Detect Vercel serverless environment (AWS Lambda / Vercel only allows write operations in /tmp)
-    is_vercel = bool(os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME"))
-    default_sqlite_path = "sqlite:////tmp/fitness.db" if is_vercel else f"sqlite:///{os.path.join(BASE_DIR, 'fitness.db')}"
-
-    # Database configuration
+    # Check for external Postgres DB first
     db_url = os.getenv("DATABASE_URL")
-    if not db_url or not db_url.strip():
-        db_url = default_sqlite_path
-    elif db_url.startswith("postgres://"):
-        db_url = db_url.replace("postgres://", "postgresql://", 1)
-
-    SQLALCHEMY_DATABASE_URI = db_url
+    if db_url and db_url.strip():
+        if db_url.startswith("postgres://"):
+            db_url = db_url.replace("postgres://", "postgresql://", 1)
+        SQLALCHEMY_DATABASE_URI = db_url
+    else:
+        # Check if environment is serverless or read-only (Lambda / Vercel / Cloud Functions)
+        is_serverless = bool(
+            os.getenv("VERCEL")
+            or os.getenv("AWS_LAMBDA_FUNCTION_NAME")
+            or os.getenv("LAMBDA_TASK_ROOT")
+            or "/var/task" in os.path.abspath(__file__)
+        )
+        if is_serverless:
+            SQLALCHEMY_DATABASE_URI = "sqlite:////tmp/fitness.db"
+        else:
+            SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(BASE_DIR, 'fitness.db')}"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # Anthropic Claude API Configuration
