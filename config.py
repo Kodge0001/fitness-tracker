@@ -14,27 +14,38 @@ class Config:
     JWT_COOKIE_SECURE = False  # Set to True in production (HTTPS)
     JWT_COOKIE_CSRF_PROTECT = False  # Keep false for dual API/Web simplicity
 
-    # Base directory
-    BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-
-    # Check for external Postgres DB first
+def get_database_uri():
     db_url = os.getenv("DATABASE_URL")
     if db_url and db_url.strip():
         if db_url.startswith("postgres://"):
-            db_url = db_url.replace("postgres://", "postgresql://", 1)
-        SQLALCHEMY_DATABASE_URI = db_url
-    else:
-        # Check if environment is serverless or read-only (Lambda / Vercel / Cloud Functions)
-        is_serverless = bool(
-            os.getenv("VERCEL")
-            or os.getenv("AWS_LAMBDA_FUNCTION_NAME")
-            or os.getenv("LAMBDA_TASK_ROOT")
-            or "/var/task" in os.path.abspath(__file__)
-        )
-        if is_serverless:
-            SQLALCHEMY_DATABASE_URI = "sqlite:////tmp/fitness.db"
-        else:
-            SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(BASE_DIR, 'fitness.db')}"
+            return db_url.replace("postgres://", "postgresql://", 1)
+        return db_url
+
+    # Check if running in Vercel / AWS Lambda / Serverless
+    is_serverless = (
+        os.path.exists("/var/task")
+        or "AWS_LAMBDA_FUNCTION_NAME" in os.environ
+        or "VERCEL" in os.environ
+        or "/var/task" in os.path.abspath(__file__)
+    )
+
+    if is_serverless:
+        return "sqlite:////tmp/fitness.db"
+
+    base_dir = os.path.abspath(os.path.dirname(__file__))
+    return f"sqlite:///{os.path.join(base_dir, 'fitness.db')}"
+
+
+class Config:
+    SECRET_KEY = os.getenv("SECRET_KEY", "super-secret-key-fitness-tracker-production-2026-secure-key-64-bytes-min")
+    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "super-jwt-fitness-secret-key-production-2026-secure-key-64-bytes-min")
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=2)
+    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
+    JWT_TOKEN_LOCATION = ["headers", "cookies"]
+    JWT_COOKIE_SECURE = False
+    JWT_COOKIE_CSRF_PROTECT = False
+
+    SQLALCHEMY_DATABASE_URI = get_database_uri()
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # Anthropic Claude API Configuration
@@ -51,7 +62,7 @@ class DevelopmentConfig(Config):
 
 class ProductionConfig(Config):
     DEBUG = False
-    JWT_COOKIE_SECURE = True
+    JWT_COOKIE_SECURE = False  # Set to false to support Vercel proxy cookies effortlessly
 
 
 config_by_name = {
